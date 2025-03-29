@@ -11,12 +11,19 @@ merchantRouter.post("/signup", async (req, res) => {
   const { username, password, name } = req.body; // zod to verify schema
 
   try {
-    await prismaclient.merchant.create({
-      data: {
-        username,
-        password,
-        name,
-      },
+    await prismaclient.$transaction(async (tx) => {
+      const merchant = await tx.merchant.create({
+        data: {
+          username,
+          password,
+          name,
+        },
+      });
+      await tx.merchantAccount.create({
+        data: {
+          merchantId: merchant.id,
+        },
+      });
     });
     res.json({ message: "Signed up" });
   } catch (error) {
